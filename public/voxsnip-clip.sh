@@ -4,21 +4,22 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 set -u
 
-notify() {
-  if command -v notify-send >/dev/null 2>&1; then
-    notify-send --app-name="VoxSnip" "VoxSnip" "$1" || true
-  fi
-}
+HERE="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+# shellcheck source=voxsnip-lib.sh
+. "${HERE}/voxsnip-lib.sh"
 
-if ! command -v gnome-screenshot >/dev/null 2>&1; then
-  notify "gnome-screenshot is not installed."
-  exit 1
-fi
+TMPDIR="$(mktemp -d "${XDG_RUNTIME_DIR:-/tmp}/voxsnip.XXXXXX")"
+trap 'rm -rf "$TMPDIR"' EXIT
+IMG="${TMPDIR}/snip.png"
 
-if gnome-screenshot -a -c; then
-  notify "Screenshot copied to clipboard."
+if ! voxsnip_capture_area "$IMG"; then
   exit 0
 fi
 
-# User cancelled the selection or the capture failed.
+if ! voxsnip_copy_image "$IMG"; then
+  voxsnip_notify "No clipboard tool found (install wl-clipboard or xclip)."
+  exit 1
+fi
+
+voxsnip_notify "Screenshot copied to clipboard."
 exit 0

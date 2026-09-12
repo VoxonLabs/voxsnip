@@ -18,12 +18,14 @@ jobs:
         run: |
           bash -n src/voxsnip-clip.sh
           bash -n src/voxsnip-text.sh
+          bash -n src/voxsnip-lib.sh
           bash -n src/voxsnip-uninstall.sh
           bash -n public/install.sh
       - name: Source copies match
         run: |
           cmp src/voxsnip-clip.sh public/voxsnip-clip.sh
           cmp src/voxsnip-text.sh public/voxsnip-text.sh
+          cmp src/voxsnip-lib.sh public/voxsnip-lib.sh
           cmp src/voxsnip-uninstall.sh public/voxsnip-uninstall.sh
       - name: ShellCheck
         uses: ludeeus/action-shellcheck@2.0.0

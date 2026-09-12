@@ -14,6 +14,7 @@ readonly CONFIG_DIR="${HOME}/.config/voxsnip"
 readonly LANGS_CONF="${CONFIG_DIR}/langs.conf"
 readonly CLIP_NAME="voxsnip-clip.sh"
 readonly TEXT_NAME="voxsnip-text.sh"
+readonly LIB_NAME="voxsnip-lib.sh"
 readonly UNINSTALL_NAME="voxsnip-uninstall.sh"
 
 readonly GH_RAW="https://raw.githubusercontent.com/VoxonLabs/voxsnip/main/src"
@@ -86,7 +87,7 @@ welcome() {
 BANNER
   printf "${RESET}"
   printf "  ${BOLD}%s by %s${RESET}\n" "$APP_NAME" "$VENDOR"
-  printf "  ${DIM}Linux snipping + OCR  ·  Alt+S screenshot  ·  Alt+T extract text${RESET}\n\n"
+  printf "  ${DIM}Linux snipping + OCR  ·  Alt+S screenshot  ·  Alt+W extract text${RESET}\n\n"
 }
 
 require_cmd() {
@@ -150,13 +151,16 @@ install_scripts() {
   mkdir -p "$BIN_DIR"
   local clip="${BIN_DIR}/${CLIP_NAME}"
   local text="${BIN_DIR}/${TEXT_NAME}"
+  local lib="${BIN_DIR}/${LIB_NAME}"
   local uninstall="${BIN_DIR}/${UNINSTALL_NAME}"
 
   info "Installing scripts to ${BIN_DIR}..."
   resolve_script "$CLIP_NAME" "$clip" || die "Could not obtain ${CLIP_NAME}."
   resolve_script "$TEXT_NAME" "$text" || die "Could not obtain ${TEXT_NAME}."
+  resolve_script "$LIB_NAME" "$lib" || die "Could not obtain ${LIB_NAME}."
   resolve_script "$UNINSTALL_NAME" "$uninstall" || die "Could not obtain ${UNINSTALL_NAME}."
   chmod +x "$clip" "$text" "$uninstall"
+  chmod +x "$lib" 2>/dev/null || chmod 644 "$lib"
   ok "Scripts installed and marked executable."
 }
 
@@ -255,7 +259,7 @@ setup_shortcuts() {
   if ! require_cmd gsettings; then
     warn "gsettings not found. Skipping automatic keyboard shortcuts."
     warn "Bind Alt+S → ${BIN_DIR}/${CLIP_NAME}"
-    warn "Bind Alt+T → ${BIN_DIR}/${TEXT_NAME}"
+    warn "Bind Alt+W → ${BIN_DIR}/${TEXT_NAME}"
     return 0
   fi
 
@@ -264,10 +268,10 @@ setup_shortcuts() {
     return 0
   fi
 
-  info "Binding GNOME shortcuts (Alt+S, Alt+T)..."
+  info "Binding GNOME shortcuts (Alt+S, Alt+W)..."
   bind_shortcut "VoxSnip Screenshot" "${BIN_DIR}/${CLIP_NAME}" "<Alt>s"
-  bind_shortcut "VoxSnip Text Extractor" "${BIN_DIR}/${TEXT_NAME}" "<Alt>t"
-  ok "Shortcuts bound: Alt+S (snip) and Alt+T (OCR)."
+  bind_shortcut "VoxSnip Text Extractor" "${BIN_DIR}/${TEXT_NAME}" "<Alt>w"
+  ok "Shortcuts bound: Alt+S (snip) and Alt+W (OCR)."
 }
 
 ensure_local_bin_path() {
@@ -348,7 +352,7 @@ main() {
   ok "${APP_NAME} is ready."
   printf "\n"
   printf "  ${BOLD}Alt+S${RESET}  Copy an area screenshot to the clipboard\n"
-  printf "  ${BOLD}Alt+T${RESET}  Extract text from an area (OCR) and copy it\n"
+  printf "  ${BOLD}Alt+W${RESET}  Extract text from an area (OCR) and copy it\n"
   printf "\n"
   printf "  ${DIM}Languages: %s${RESET}\n" "$lang_string"
   printf "  ${DIM}Config:    %s${RESET}\n" "$LANGS_CONF"

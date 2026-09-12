@@ -4,7 +4,7 @@ Linux area screenshot and on-screen OCR, published by [Voxon Labs](https://voxon
 
 **Website:** [voxsnip.voxonlabs.com](https://voxsnip.voxonlabs.com)
 
-VoxSnip is a small GNOME desktop utility. Press `Alt+S` to copy a selected region to the clipboard, or `Alt+T` to extract text from that region with Tesseract and copy the result.
+VoxSnip is a small GNOME desktop utility. Press `Alt+S` to copy a selected region to the clipboard, or `Alt+W` to extract text from that region with Tesseract and copy the result.
 
 OCR runs locally. Selected pixels never leave the machine.
 
@@ -41,7 +41,7 @@ bash public/install.sh
 | Shortcut | Action |
 | --- | --- |
 | `Alt+S` | Select a screen region and copy the image to the clipboard |
-| `Alt+T` | Select a screen region, run Tesseract, and copy recognized text |
+| `Alt+W` | Select a screen region, run Tesseract, and copy recognized text |
 
 Desktop notifications confirm success, cancellation, or missing dependencies.
 
@@ -107,6 +107,7 @@ The uninstall script removes the user scripts, config directory, and GNOME custo
 
 ```text
 src/                 Runtime scripts (source of truth)
+src/voxsnip-lib.sh   Shared area-capture helper
 public/              Product site, installer, and mirrored scripts
 LICENSE              GNU Affero General Public License v3.0
 SECURITY.md          Vulnerability reporting

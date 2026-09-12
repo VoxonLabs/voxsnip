@@ -20,7 +20,7 @@ body:
       options:
         - Installer
         - Alt+S screenshot
-        - Alt+T text extraction
+        - Alt+W text extraction
         - Uninstall
         - Website
         - Other
