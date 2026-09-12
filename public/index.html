@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VoxSnip - Linux Snipping & OCR Tool</title>
+  <meta name="description" content="VoxSnip by Voxon Labs — Linux area screenshot and Tesseract OCR. Alt+S to snip, Alt+T to extract text.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --voxon-chalk: #F9F9F8;
+      --voxon-mist: #F2F2F0;
+      --voxon-fog: #E5E5E1;
+      --voxon-line: #D6D6D1;
+      --voxon-muted: #8E918B;
+      --voxon-slate: #5F635D;
+      --voxon-graphite: #323531;
+      --voxon-ink: #111317;
+
+      --bg-canvas: var(--voxon-chalk);
+      --bg-surface: #FFFFFF;
+      --bg-subtle: var(--voxon-mist);
+      --bg-card: #FFFFFF;
+      --border-subtle: var(--voxon-fog);
+      --border-medium: var(--voxon-line);
+      --text-primary: var(--voxon-ink);
+      --text-secondary: var(--voxon-slate);
+      --text-muted: var(--voxon-muted);
+      --btn-primary-bg: var(--voxon-ink);
+      --btn-primary-text: #FFFFFF;
+      --btn-primary-hover: #22262F;
+      --btn-secondary-bg: #FFFFFF;
+      --btn-secondary-text: var(--voxon-ink);
+      --btn-secondary-border: var(--voxon-line);
+      --btn-secondary-hover: var(--voxon-mist);
+      --badge-bg: var(--voxon-mist);
+      --badge-border: var(--voxon-fog);
+      --badge-text: var(--voxon-graphite);
+      --code-bg: var(--voxon-mist);
+      --code-border: var(--voxon-fog);
+      --code-text: var(--voxon-graphite);
+      --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "JetBrains Mono", SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --radius-sm: 4px;
+      --radius-md: 6px;
+    }
+
+    [data-theme="dark"] {
+      --bg-canvas: #0C0E12;
+      --bg-surface: #12151B;
+      --bg-subtle: #171B23;
+      --bg-card: #13161D;
+      --border-subtle: #202632;
+      --border-medium: #2F3747;
+      --text-primary: #F9F9F8;
+      --text-secondary: #9DA3AF;
+      --text-muted: #6B7280;
+      --btn-primary-bg: #F9F9F8;
+      --btn-primary-text: #0C0E12;
+      --btn-primary-hover: #E5E5E1;
+      --btn-secondary-bg: #13161D;
+      --btn-secondary-text: #F9F9F8;
+      --btn-secondary-border: #2F3747;
+      --btn-secondary-hover: #1E232E;
+      --badge-bg: #171B23;
+      --badge-border: #242A38;
+      --badge-text: #C5CAD3;
+      --code-bg: #151922;
+      --code-border: #242A38;
+      --code-text: #E5E5E1;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { -webkit-font-smoothing: antialiased; }
+
+    body {
+      min-height: 100vh;
+      font-family: var(--font-sans);
+      background: var(--bg-canvas);
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      line-height: 1.6;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .container {
+      width: 100%;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-canvas);
+    }
+
+    .nav {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--text-primary);
+    }
+
+    .brand-mark {
+      width: 26px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+
+    .brand-name {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .brand-sep {
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .brand-product {
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+
+    .theme-toggle {
+      width: 36px;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .theme-toggle:hover {
+      color: var(--text-primary);
+      border-color: var(--border-medium);
+    }
+
+    .icon-sun { display: none; }
+    [data-theme="dark"] .icon-sun { display: block; }
+    [data-theme="dark"] .icon-moon { display: none; }
+
+    main { flex: 1; padding: 5rem 0 4rem; }
+
+    .eyebrow {
+      display: inline-flex;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    h1 {
+      font-size: clamp(2.25rem, 4.5vw, 3.25rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+    }
+
+    .lede {
+      color: var(--text-secondary);
+      font-size: 1.1875rem;
+      line-height: 1.6;
+      max-width: 640px;
+      margin-bottom: 2.25rem;
+    }
+
+    kbd {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      border-radius: var(--radius-sm);
+      padding: 0.1rem 0.4rem;
+      color: var(--text-primary);
+    }
+
+    .code-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .code-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-subtle);
+    }
+
+    .code-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .copy-btn {
+      border: 1px solid var(--btn-secondary-border);
+      background: var(--btn-secondary-bg);
+      color: var(--btn-secondary-text);
+      border-radius: var(--radius-sm);
+      padding: 0.4rem 0.7rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .copy-btn:hover { background: var(--btn-secondary-hover); }
+
+    pre {
+      padding: 1.25rem 1rem 1.35rem;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: var(--code-text);
+      background: var(--code-bg);
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+    }
+
+    .card h2 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+
+    .card p {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+    }
+
+    .langs {
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .langs strong { color: var(--text-primary); font-weight: 600; }
+
+    footer {
+      border-top: 1px solid var(--border-subtle);
+      padding: 1.5rem 0 2rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    footer a { color: var(--text-secondary); }
+    footer a:hover { color: var(--text-primary); }
+
+    @media (max-width: 640px) {
+      main { padding-top: 3.5rem; }
+      .features { grid-template-columns: 1fr; }
+      .brand-name { font-size: 0.8125rem; }
+    }
+  </style>
+  <script>
+    (() => {
+      try {
+        const stored = localStorage.getItem("voxon-theme");
+        if (stored === "dark" || stored === "light") {
+          document.documentElement.setAttribute("data-theme", stored);
+          return;
+        }
+        document.documentElement.setAttribute(
+          "data-theme",
+          window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+        );
+      } catch (_) {}
+    })();
+  </script>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <a class="brand" href="https://voxonlabs.com" aria-label="Voxon Labs">
+        <svg class="brand-mark" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="50" cy="50" r="44" stroke-width="6"></circle>
+          <path d="M 50 18 C 36 18, 26 28, 22 42 C 19 52, 14 55, 14 50 C 14 45, 20 42, 28 50 C 34 56, 42 78, 50 78 C 58 78, 66 56, 72 50 C 80 42, 86 45, 86 50 C 86 55, 81 52, 78 42 C 74 28, 64 18, 50 18 Z" stroke-width="5"></path>
+          <path d="M 28 50 C 20 58, 14 55, 14 50" stroke-width="5"></path>
+          <path d="M 72 50 C 80 58, 86 55, 86 50" stroke-width="5"></path>
+        </svg>
+        <span class="brand-name">VOXON LABS <span class="brand-sep">/</span> <span class="brand-product">VoxSnip</span></span>
+      </a>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme">
+        <svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+        </svg>
+        <svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <p class="eyebrow">Public work · Linux desktop</p>
+      <h1>Snip the screen. Copy the text.</h1>
+      <p class="lede">
+        VoxSnip is a Linux utility for area screenshots and on-screen OCR.
+        Press <kbd>Alt+S</kbd> to copy a snip, or <kbd>Alt+T</kbd> to extract text with Tesseract.
+      </p>
+
+      <section class="code-card" aria-label="Install command">
+        <div class="code-bar">
+          <span class="code-label">install.sh</span>
+          <button type="button" class="copy-btn" id="copy">Copy command</button>
+        </div>
+        <pre>curl -fsSL https://voxsnip.voxonlabs.com/install.sh | bash</pre>
+      </section>
+
+      <div class="features">
+        <article class="card">
+          <h2>Alt+S · Screenshot</h2>
+          <p>Select an area and copy the image straight to the clipboard.</p>
+        </article>
+        <article class="card">
+          <h2>Alt+T · Text extractor</h2>
+          <p>OCR the selected region and copy the recognized text.</p>
+        </article>
+      </div>
+
+      <p class="langs">
+        Supports <strong>English</strong>, <strong>EU languages</strong> (Spanish, French, German),
+        <strong>Japanese</strong> (including vertical text), and <strong>Nepali</strong> out of the box.
+      </p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container footer-row">
+      <span>A public project by <a href="https://voxonlabs.com">Voxon Labs</a></span>
+      <a href="https://voxonlabs.com/commons">Other public work</a>
+    </div>
+  </footer>
+
+  <script>
+    const command = "curl -fsSL https://voxsnip.voxonlabs.com/install.sh | bash";
+    const button = document.getElementById("copy");
+    button.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(command);
+        button.textContent = "Copied";
+        setTimeout(() => { button.textContent = "Copy command"; }, 1600);
+      } catch {
+        button.textContent = "Copy failed";
+      }
+    });
+
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      const current = document.documentElement.getAttribute("data-theme") || "light";
+      const next = current === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("voxon-theme", next);
+    });
+  </script>
+</body>
+</html>
