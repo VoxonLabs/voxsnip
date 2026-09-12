@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # VoxSnip — extract text from a selected screen area (Tesseract OCR)
-# VoxonLabs
+# Copyright (c) 2026 Voxon Labs
+# SPDX-License-Identifier: AGPL-3.0-only
 set -u
 
 CONFIG_FILE="${HOME}/.config/voxsnip/langs.conf"

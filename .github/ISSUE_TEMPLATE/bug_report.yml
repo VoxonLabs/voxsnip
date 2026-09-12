@@ -1,0 +1,41 @@
+name: Bug report
+description: Something in VoxSnip does not work as documented
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Use SECURITY.md for vulnerabilities. Do not attach screenshots that contain private information.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what occurred instead.
+    validations:
+      required: true
+  - type: dropdown
+    id: action
+    attributes:
+      label: Which action
+      options:
+        - Installer
+        - Alt+S screenshot
+        - Alt+T text extraction
+        - Uninstall
+        - Website
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS and desktop
+      placeholder: Ubuntu 24.04, GNOME, Wayland
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output
+      description: Terminal output or notification text. Redact personal paths if needed.
+      render: text

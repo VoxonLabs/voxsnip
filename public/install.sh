@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# VoxSnip installer — VoxonLabs
+# VoxSnip installer — Voxon Labs
+# Copyright (c) 2026 Voxon Labs
+# SPDX-License-Identifier: AGPL-3.0-only
 # Usage:
 #   curl -fsSL https://voxsnip.voxonlabs.com/install.sh | bash
 #   bash public/install.sh
@@ -12,6 +14,7 @@ readonly CONFIG_DIR="${HOME}/.config/voxsnip"
 readonly LANGS_CONF="${CONFIG_DIR}/langs.conf"
 readonly CLIP_NAME="voxsnip-clip.sh"
 readonly TEXT_NAME="voxsnip-text.sh"
+readonly UNINSTALL_NAME="voxsnip-uninstall.sh"
 
 readonly GH_RAW="https://raw.githubusercontent.com/VoxonLabs/voxsnip/main/src"
 readonly WEB_BASE="https://voxsnip.voxonlabs.com"
@@ -147,11 +150,13 @@ install_scripts() {
   mkdir -p "$BIN_DIR"
   local clip="${BIN_DIR}/${CLIP_NAME}"
   local text="${BIN_DIR}/${TEXT_NAME}"
+  local uninstall="${BIN_DIR}/${UNINSTALL_NAME}"
 
   info "Installing scripts to ${BIN_DIR}..."
   resolve_script "$CLIP_NAME" "$clip" || die "Could not obtain ${CLIP_NAME}."
   resolve_script "$TEXT_NAME" "$text" || die "Could not obtain ${TEXT_NAME}."
-  chmod +x "$clip" "$text"
+  resolve_script "$UNINSTALL_NAME" "$uninstall" || die "Could not obtain ${UNINSTALL_NAME}."
+  chmod +x "$clip" "$text" "$uninstall"
   ok "Scripts installed and marked executable."
 }
 
@@ -347,7 +352,8 @@ main() {
   printf "\n"
   printf "  ${DIM}Languages: %s${RESET}\n" "$lang_string"
   printf "  ${DIM}Config:    %s${RESET}\n" "$LANGS_CONF"
-  printf "  ${DIM}Scripts:   %s${RESET}\n\n" "$BIN_DIR"
+  printf "  ${DIM}Scripts:   %s${RESET}\n" "$BIN_DIR"
+  printf "  ${DIM}Uninstall: %s${RESET}\n\n" "${BIN_DIR}/${UNINSTALL_NAME}"
 }
 
 main "$@"

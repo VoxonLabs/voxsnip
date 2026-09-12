@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # VoxSnip — area screenshot to clipboard
-# VoxonLabs
+# Copyright (c) 2026 Voxon Labs
+# SPDX-License-Identifier: AGPL-3.0-only
 set -u
 
 notify() {

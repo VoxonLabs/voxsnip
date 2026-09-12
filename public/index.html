@@ -3,8 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>VoxSnip - Linux Snipping & OCR Tool</title>
-  <meta name="description" content="VoxSnip by Voxon Labs — Linux area screenshot and Tesseract OCR. Alt+S to snip, Alt+T to extract text.">
+  <title>VoxSnip — Linux Snipping &amp; OCR Tool</title>
+  <meta name="description" content="VoxSnip by Voxon Labs. Local Linux area screenshots and Tesseract OCR. Alt+S to snip, Alt+T to extract text.">
+  <link rel="canonical" href="https://voxsnip.voxonlabs.com/">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://voxsnip.voxonlabs.com/">
+  <meta property="og:title" content="VoxSnip — Linux Snipping & OCR Tool">
+  <meta property="og:description" content="Area screenshots and on-screen OCR for GNOME. Processing stays on your machine.">
+  <meta property="og:image" content="https://voxonlabs.com/logo-square.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -135,6 +142,20 @@
       font-weight: 600;
       letter-spacing: 0;
     }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .nav-link {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .nav-link:hover { color: var(--text-primary); }
 
     .theme-toggle {
       width: 36px;
@@ -330,7 +351,9 @@
         </svg>
         <span class="brand-name">VOXON LABS <span class="brand-sep">/</span> <span class="brand-product">VoxSnip</span></span>
       </a>
-      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme">
+      <div class="nav-actions">
+        <a class="nav-link" href="https://github.com/VoxonLabs/voxsnip">Source</a>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme">
         <svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="4"></circle>
           <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
@@ -339,6 +362,7 @@
           <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
         </svg>
       </button>
+      </div>
     </div>
   </header>
 
@@ -373,14 +397,21 @@
       <p class="langs">
         Supports <strong>English</strong>, <strong>EU languages</strong> (Spanish, French, German),
         <strong>Japanese</strong> (including vertical text), and <strong>Nepali</strong> out of the box.
+        OCR runs locally with Tesseract. Review the installer before piping it to a shell.
       </p>
     </div>
   </main>
 
   <footer>
     <div class="container footer-row">
-      <span>A public project by <a href="https://voxonlabs.com">Voxon Labs</a></span>
-      <a href="https://voxonlabs.com/commons">Other public work</a>
+      <span>A public project by <a href="https://voxonlabs.com">Voxon Labs</a> · AGPL-3.0</span>
+      <span>
+        <a href="https://github.com/VoxonLabs/voxsnip">GitHub</a>
+        ·
+        <a href="https://github.com/VoxonLabs/voxsnip/blob/main/LICENSE">License</a>
+        ·
+        <a href="https://voxonlabs.com/commons">Public work</a>
+      </span>
     </div>
   </footer>
 
