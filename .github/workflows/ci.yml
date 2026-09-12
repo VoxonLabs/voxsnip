@@ -21,11 +21,13 @@ jobs:
           bash -n src/voxsnip-lib.sh
           bash -n src/voxsnip-uninstall.sh
           bash -n public/install.sh
+          python3 -m py_compile src/voxsnip-portal.py
       - name: Source copies match
         run: |
           cmp src/voxsnip-clip.sh public/voxsnip-clip.sh
           cmp src/voxsnip-text.sh public/voxsnip-text.sh
           cmp src/voxsnip-lib.sh public/voxsnip-lib.sh
+          cmp src/voxsnip-portal.py public/voxsnip-portal.py
           cmp src/voxsnip-uninstall.sh public/voxsnip-uninstall.sh
       - name: ShellCheck
         uses: ludeeus/action-shellcheck@2.0.0

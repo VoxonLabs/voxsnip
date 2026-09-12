@@ -40,8 +40,8 @@ bash public/install.sh
 
 | Shortcut | Action |
 | --- | --- |
-| `Alt+S` | Select a screen region and copy the image to the clipboard |
-| `Alt+W` | Select a screen region, run Tesseract, and copy recognized text |
+| `Alt+S` | Open the GNOME selector, choose Selection, drag a region, copy the image |
+| `Alt+W` | Same selector, then copy recognized text |
 
 Desktop notifications confirm success, cancellation, or missing dependencies.
 
@@ -108,6 +108,7 @@ The uninstall script removes the user scripts, config directory, and GNOME custo
 ```text
 src/                 Runtime scripts (source of truth)
 src/voxsnip-lib.sh   Shared area-capture helper
+src/voxsnip-portal.py  GNOME screenshot portal client
 public/              Product site, installer, and mirrored scripts
 LICENSE              GNU Affero General Public License v3.0
 SECURITY.md          Vulnerability reporting

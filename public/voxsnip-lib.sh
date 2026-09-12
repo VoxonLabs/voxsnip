@@ -9,8 +9,7 @@ voxsnip_notify() {
   fi
 }
 
-# Custom shortcuts fire while Alt is still down. GNOME will not start
-# an area picker until the modifier is released.
+# Custom shortcuts fire while Alt is still down.
 voxsnip_wait_for_hotkey() {
   sleep 0.35
 }
@@ -49,64 +48,40 @@ voxsnip_copy_text() {
   return 1
 }
 
-voxsnip_capture_via_shell() {
-  local dest="$1"
-  command -v gdbus >/dev/null 2>&1 || return 1
+VOXSNIP_SOURCE_IMAGE=""
 
-  local raw
-  if ! raw="$(gdbus call --session \
-    --dest org.gnome.Shell.Screenshot \
-    --object-path /org/gnome/Shell/Screenshot \
-    --method org.gnome.Shell.Screenshot.SelectArea 2>/dev/null)"; then
-    return 1
+voxsnip_discard_source() {
+  if [[ -n "${VOXSNIP_SOURCE_IMAGE:-}" && -f "$VOXSNIP_SOURCE_IMAGE" ]]; then
+    rm -f "$VOXSNIP_SOURCE_IMAGE"
   fi
-
-  local x y w h
-  read -r x y w h < <(printf '%s' "$raw" | grep -oE '-?[0-9]+' | head -n 4 | tr '\n' ' ')
-  [[ -n "${x:-}" && -n "${y:-}" && -n "${w:-}" && -n "${h:-}" ]] || return 1
-  [[ "$w" -gt 0 && "$h" -gt 0 ]] || return 1
-
-  mkdir -p "$(dirname "$dest")"
-  rm -f "$dest"
-
-  local shot used
-  if ! shot="$(gdbus call --session \
-    --dest org.gnome.Shell.Screenshot \
-    --object-path /org/gnome/Shell/Screenshot \
-    --method org.gnome.Shell.Screenshot.ScreenshotArea \
-    "$x" "$y" "$w" "$h" true "$dest" 2>/dev/null)"; then
-    return 1
-  fi
-
-  if [[ -s "$dest" ]]; then
-    return 0
-  fi
-
-  used="$(printf '%s' "$shot" | grep -oE "'[^']+'" | tail -n 1 | tr -d "'")"
-  if [[ -n "$used" && -s "$used" && "$used" != "$dest" ]]; then
-    cp "$used" "$dest"
-    return 0
-  fi
-  return 1
+  VOXSNIP_SOURCE_IMAGE=""
 }
 
-# Write a PNG of the user-selected region to $1. Returns 1 if cancelled or failed.
+# Write a PNG of the user-selected region to $1.
+# On GNOME 42+ / Wayland the Shell screenshot D-Bus API is denied, so we use
+# the desktop portal. Choose the dashed-rectangle (Selection) mode, then drag.
 voxsnip_capture_area() {
   local dest="$1"
+  local here portal src
 
   voxsnip_wait_for_hotkey
 
-  if voxsnip_capture_via_shell "$dest"; then
-    return 0
+  here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+  portal="${here}/voxsnip-portal.py"
+  if [[ ! -f "$portal" ]]; then
+    voxsnip_notify "Missing ${portal}"
+    return 1
   fi
 
-  if command -v gnome-screenshot >/dev/null 2>&1; then
-    mkdir -p "$(dirname "$dest")"
-    rm -f "$dest"
-    if gnome-screenshot -a -f "$dest" && [[ -s "$dest" ]]; then
-      return 0
-    fi
+  if ! src="$(python3 "$portal")"; then
+    return 1
+  fi
+  if [[ ! -s "$src" ]]; then
+    return 1
   fi
 
-  return 1
+  VOXSNIP_SOURCE_IMAGE="$src"
+  mkdir -p "$(dirname "$dest")"
+  cp "$src" "$dest"
+  return 0
 }

@@ -41,6 +41,10 @@ if ! voxsnip_capture_area "$IMG"; then
   exit 0
 fi
 
+# GNOME's screenshot UI also saves a PNG and may write the image clipboard.
+# Alt+W should leave only recognized text.
+voxsnip_discard_source
+
 if ! tesseract "$IMG" "$OUT" -l "$LANGS" >/dev/null 2>&1; then
   voxsnip_notify "OCR failed. Check languages in ~/.config/voxsnip/langs.conf (${LANGS})."
   exit 1
@@ -59,10 +63,14 @@ if [[ -z "$TEXT" ]]; then
   exit 0
 fi
 
+# Win the clipboard race against the GNOME screenshot UI.
+sleep 0.25
 if ! voxsnip_copy_text "$TEXT"; then
   voxsnip_notify "No clipboard tool found (install wl-clipboard or xclip)."
   exit 1
 fi
+sleep 0.15
+voxsnip_copy_text "$TEXT" || true
 
 voxsnip_notify "Text extracted and copied to clipboard."
 exit 0

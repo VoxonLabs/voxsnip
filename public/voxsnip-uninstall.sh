@@ -89,6 +89,7 @@ main() {
   remove_file "${BIN_DIR}/voxsnip-clip.sh"
   remove_file "${BIN_DIR}/voxsnip-text.sh"
   remove_file "${BIN_DIR}/voxsnip-lib.sh"
+  remove_file "${BIN_DIR}/voxsnip-portal.py"
   remove_file "${BIN_DIR}/voxsnip-uninstall.sh"
   if [[ -d "$CONFIG_DIR" ]]; then
     rm -rf "$CONFIG_DIR"

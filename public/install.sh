@@ -15,6 +15,7 @@ readonly LANGS_CONF="${CONFIG_DIR}/langs.conf"
 readonly CLIP_NAME="voxsnip-clip.sh"
 readonly TEXT_NAME="voxsnip-text.sh"
 readonly LIB_NAME="voxsnip-lib.sh"
+readonly PORTAL_NAME="voxsnip-portal.py"
 readonly UNINSTALL_NAME="voxsnip-uninstall.sh"
 
 readonly GH_RAW="https://raw.githubusercontent.com/VoxonLabs/voxsnip/main/src"
@@ -152,15 +153,17 @@ install_scripts() {
   local clip="${BIN_DIR}/${CLIP_NAME}"
   local text="${BIN_DIR}/${TEXT_NAME}"
   local lib="${BIN_DIR}/${LIB_NAME}"
+  local portal="${BIN_DIR}/${PORTAL_NAME}"
   local uninstall="${BIN_DIR}/${UNINSTALL_NAME}"
 
   info "Installing scripts to ${BIN_DIR}..."
   resolve_script "$CLIP_NAME" "$clip" || die "Could not obtain ${CLIP_NAME}."
   resolve_script "$TEXT_NAME" "$text" || die "Could not obtain ${TEXT_NAME}."
   resolve_script "$LIB_NAME" "$lib" || die "Could not obtain ${LIB_NAME}."
+  resolve_script "$PORTAL_NAME" "$portal" || die "Could not obtain ${PORTAL_NAME}."
   resolve_script "$UNINSTALL_NAME" "$uninstall" || die "Could not obtain ${UNINSTALL_NAME}."
-  chmod +x "$clip" "$text" "$uninstall"
-  chmod +x "$lib" 2>/dev/null || chmod 644 "$lib"
+  chmod +x "$clip" "$text" "$uninstall" "$portal"
+  chmod 644 "$lib" 2>/dev/null || true
   ok "Scripts installed and marked executable."
 }
 
