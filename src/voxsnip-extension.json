@@ -1,0 +1,8 @@
+{
+  "uuid": "voxsnip@voxonlabs.com",
+  "name": "VoxSnip Direct Selection",
+  "description": "Direct area selection for VoxSnip screenshot and OCR shortcuts",
+  "shell-version": ["45", "46", "47", "48", "49", "50"],
+  "url": "https://github.com/VoxonLabs/voxsnip",
+  "version": 1
+}

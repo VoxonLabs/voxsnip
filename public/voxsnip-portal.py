@@ -2,7 +2,12 @@
 # VoxSnip — ask GNOME for an interactive screenshot via xdg-desktop-portal
 # Copyright (c) 2026 Voxon Labs
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Print the captured PNG path on stdout. Exit 1 if the user cancels."""
+"""Print a selected-area PNG path on stdout. Exit 1 if cancelled.
+
+Prefer VoxSnip's GNOME Shell companion, which finishes as soon as the user
+releases the mouse. Then try Screenshot portal v3's explicit Area target.
+The legacy interactive chooser remains as a compatibility fallback.
+"""
 
 from __future__ import annotations
 
@@ -14,9 +19,49 @@ import gi
 gi.require_version("Gio", "2.0")
 from gi.repository import Gio, GLib
 
+DIRECT_BUS = "com.voxonlabs.VoxSnip"
+DIRECT_PATH = "/com/voxonlabs/VoxSnip"
+DIRECT_IFACE = "com.voxonlabs.VoxSnip"
+AREA_TARGET = 4
+
+
+def try_direct_capture(bus: Gio.DBusConnection) -> tuple[bool, str | None]:
+    """Return (handled, path) for the Shell companion."""
+    try:
+        reply = bus.call_sync(
+            DIRECT_BUS,
+            DIRECT_PATH,
+            DIRECT_IFACE,
+            "CaptureArea",
+            None,
+            GLib.VariantType.new("(bs)"),
+            Gio.DBusCallFlags.NO_AUTO_START,
+            120_000,
+            None,
+        )
+        success, path = reply.unpack()
+        if success and path:
+            return True, str(path)
+        return True, None
+    except GLib.Error:
+        pass
+    return False, None
+
+
+def uint_property(proxy: Gio.DBusProxy, name: str) -> int:
+    value = proxy.get_cached_property(name)
+    return int(value.unpack()) if value is not None else 0
+
 
 def main() -> int:
     bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+    direct_handled, direct_path = try_direct_capture(bus)
+    if direct_handled:
+        if direct_path:
+            print(direct_path)
+            return 0
+        return 1
+
     proxy = Gio.DBusProxy.new_sync(
         bus,
         Gio.DBusProxyFlags.NONE,
@@ -51,9 +96,20 @@ def main() -> int:
             result["error"] = str(exc)
             loop.quit()
 
+    options: dict[str, GLib.Variant] = {
+        "interactive": GLib.Variant("b", True),
+    }
+    # Portal v3 can enter the area picker directly. Older portals ignore or
+    # reject this option, so only send it when both version and target agree.
+    if uint_property(proxy, "version") >= 3:
+        available = uint_property(proxy, "AvailableTargets")
+        if available & AREA_TARGET:
+            options["interactive"] = GLib.Variant("b", False)
+            options["target"] = GLib.Variant("u", AREA_TARGET)
+
     proxy.call(
         "Screenshot",
-        GLib.Variant("(sa{sv})", ("", {"interactive": GLib.Variant("b", True)})),
+        GLib.Variant("(sa{sv})", ("", options)),
         Gio.DBusCallFlags.NONE,
         120000,
         None,

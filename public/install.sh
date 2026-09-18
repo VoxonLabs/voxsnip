@@ -17,6 +17,10 @@ readonly TEXT_NAME="voxsnip-text.sh"
 readonly LIB_NAME="voxsnip-lib.sh"
 readonly PORTAL_NAME="voxsnip-portal.py"
 readonly UNINSTALL_NAME="voxsnip-uninstall.sh"
+readonly EXTENSION_JS_NAME="voxsnip-extension.js"
+readonly EXTENSION_META_NAME="voxsnip-extension.json"
+readonly EXTENSION_UUID="voxsnip@voxonlabs.com"
+readonly EXTENSION_DIR="${HOME}/.local/share/gnome-shell/extensions/${EXTENSION_UUID}"
 
 readonly GH_RAW="https://raw.githubusercontent.com/VoxonLabs/voxsnip/main/src"
 readonly WEB_BASE="https://voxsnip.voxonlabs.com"
@@ -167,6 +171,45 @@ install_scripts() {
   ok "Scripts installed and marked executable."
 }
 
+enable_shell_companion() {
+  if [[ "${XDG_CURRENT_DESKTOP:-}" != *GNOME* ]]; then
+    return 0
+  fi
+
+  info "Installing the direct-selection GNOME Shell companion..."
+  mkdir -p "$EXTENSION_DIR"
+  resolve_script "$EXTENSION_JS_NAME" "${EXTENSION_DIR}/extension.js" \
+    || die "Could not obtain ${EXTENSION_JS_NAME}."
+  resolve_script "$EXTENSION_META_NAME" "${EXTENSION_DIR}/metadata.json" \
+    || die "Could not obtain ${EXTENSION_META_NAME}."
+  chmod 644 "${EXTENSION_DIR}/extension.js" "${EXTENSION_DIR}/metadata.json"
+
+  if require_cmd gsettings && \
+      gsettings writable org.gnome.shell enabled-extensions 2>/dev/null | grep -qx true; then
+    local current updated
+    current="$(gsettings get org.gnome.shell enabled-extensions 2>/dev/null || printf '[]')"
+    updated="$(python3 - "$current" "$EXTENSION_UUID" <<'PY'
+import ast
+import sys
+
+raw, uuid = sys.argv[1:]
+if raw.startswith("@as "):
+    raw = raw[4:]
+try:
+    enabled = list(ast.literal_eval(raw))
+except (SyntaxError, ValueError, TypeError):
+    enabled = []
+if uuid not in enabled:
+    enabled.append(uuid)
+print(repr(enabled))
+PY
+    )"
+    gsettings set org.gnome.shell enabled-extensions "$updated" || true
+  fi
+
+  ok "Direct-selection companion installed."
+}
+
 write_langs_conf() {
   local langs="$1"
   mkdir -p "$CONFIG_DIR"
@@ -304,7 +347,7 @@ main() {
   printf "${DIM}English is recommended and selected by default.${RESET}\n\n"
 
   local packages=(
-    gnome-screenshot
+    python3-gi
     tesseract-ocr
     xclip
     wl-clipboard
@@ -347,6 +390,7 @@ main() {
 
   install_packages "${packages[@]}"
   install_scripts
+  enable_shell_companion
   write_langs_conf "$lang_string"
   setup_shortcuts
   ensure_local_bin_path
@@ -361,6 +405,9 @@ main() {
   printf "  ${DIM}Config:    %s${RESET}\n" "$LANGS_CONF"
   printf "  ${DIM}Scripts:   %s${RESET}\n" "$BIN_DIR"
   printf "  ${DIM}Uninstall: %s${RESET}\n\n" "${BIN_DIR}/${UNINSTALL_NAME}"
+  if [[ "${XDG_CURRENT_DESKTOP:-}" == *GNOME* ]]; then
+    warn "Log out and back in once to load direct selection."
+  fi
 }
 
 main "$@"

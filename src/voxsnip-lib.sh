@@ -58,8 +58,8 @@ voxsnip_discard_source() {
 }
 
 # Write a PNG of the user-selected region to $1.
-# On GNOME 42+ / Wayland the Shell screenshot D-Bus API is denied, so we use
-# the desktop portal. Choose the dashed-rectangle (Selection) mode, then drag.
+# The GNOME Shell companion and Screenshot portal v3 both enter area selection
+# directly. The legacy portal chooser is retained for older/non-GNOME desktops.
 voxsnip_capture_area() {
   local dest="$1"
   local here portal src

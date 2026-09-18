@@ -6,6 +6,8 @@ set -u
 
 readonly BIN_DIR="${HOME}/.local/bin"
 readonly CONFIG_DIR="${HOME}/.config/voxsnip"
+readonly EXTENSION_UUID="voxsnip@voxonlabs.com"
+readonly EXTENSION_DIR="${HOME}/.local/share/gnome-shell/extensions/${EXTENSION_UUID}"
 readonly NAMES=("VoxSnip Screenshot" "VoxSnip Text Extractor")
 
 info() { printf '==> %s\n' "$*"; }
@@ -84,6 +86,37 @@ remove_shortcuts() {
   fi
 }
 
+remove_shell_companion() {
+  if command -v gnome-extensions >/dev/null 2>&1; then
+    gnome-extensions disable "$EXTENSION_UUID" >/dev/null 2>&1 || true
+  fi
+
+  if command -v gsettings >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+    local current updated
+    current="$(gsettings get org.gnome.shell enabled-extensions 2>/dev/null || printf '[]')"
+    updated="$(python3 - "$current" "$EXTENSION_UUID" <<'PY'
+import ast
+import sys
+
+raw, uuid = sys.argv[1:]
+if raw.startswith("@as "):
+    raw = raw[4:]
+try:
+    enabled = [item for item in ast.literal_eval(raw) if item != uuid]
+except (SyntaxError, ValueError, TypeError):
+    enabled = []
+print(repr(enabled))
+PY
+    )"
+    gsettings set org.gnome.shell enabled-extensions "$updated" 2>/dev/null || true
+  fi
+
+  if [[ -d "$EXTENSION_DIR" ]]; then
+    rm -rf "$EXTENSION_DIR"
+    info "Removed ${EXTENSION_DIR}"
+  fi
+}
+
 main() {
   info "Uninstalling VoxSnip user files..."
   remove_file "${BIN_DIR}/voxsnip-clip.sh"
@@ -95,6 +128,7 @@ main() {
     rm -rf "$CONFIG_DIR"
     info "Removed ${CONFIG_DIR}"
   fi
+  remove_shell_companion
   remove_shortcuts
   ok "VoxSnip user files removed. System packages were left installed."
 }

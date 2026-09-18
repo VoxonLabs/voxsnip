@@ -16,6 +16,9 @@ if ! voxsnip_capture_area "$IMG"; then
   exit 0
 fi
 
+# VoxSnip is clipboard-first; do not leave the portal/companion source on disk.
+voxsnip_discard_source
+
 if ! voxsnip_copy_image "$IMG"; then
   voxsnip_notify "No clipboard tool found (install wl-clipboard or xclip)."
   exit 1

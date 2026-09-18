@@ -19,7 +19,10 @@ Please do not add telemetry, accounts, remote OCR, or a heavy application framew
 ```bash
 git clone https://github.com/VoxonLabs/voxsnip.git
 cd voxsnip
-bash -n src/voxsnip-clip.sh src/voxsnip-text.sh src/voxsnip-uninstall.sh public/install.sh
+bash -n src/*.sh public/install.sh
+python3 -m py_compile src/voxsnip-portal.py
+python3 -m json.tool src/voxsnip-extension.json >/dev/null
+node --check --input-type=module < src/voxsnip-extension.js
 ```
 
 If `shellcheck` is installed:
@@ -33,7 +36,8 @@ Test on a GNOME session. The installer uses `sudo apt-get` and `gsettings`.
 When you change a script in `src/`, copy it to `public/` as well so the product site and the repository stay aligned:
 
 ```bash
-cp src/voxsnip-clip.sh src/voxsnip-text.sh src/voxsnip-uninstall.sh public/
+cp src/voxsnip-{clip,text,lib,uninstall}.sh public/
+cp src/voxsnip-portal.py src/voxsnip-extension.{js,json} public/
 ```
 
 ## Pull requests
