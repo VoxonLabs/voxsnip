@@ -118,12 +118,15 @@ src/voxsnip-lib.sh   Shared area-capture helper
 src/voxsnip-portal.py  Direct-selection and screenshot portal client
 src/voxsnip-extension.*  GNOME Shell direct-selection companion
 public/              Product site, installer, and mirrored scripts
+PHASES.md             Linux, macOS, and Windows expansion roadmap
 LICENSE              GNU Affero General Public License v3.0
 SECURITY.md          Vulnerability reporting
 CONTRIBUTING.md      How to propose changes
 CODE_OF_CONDUCT.md   Contributor Covenant
 TRADEMARKS.md        Brand reservation
 ```
+
+The platform expansion plan is documented in [PHASES.md](PHASES.md).
 
 ## Security
 
