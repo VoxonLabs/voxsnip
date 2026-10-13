@@ -14,7 +14,7 @@ OCR runs locally. Selected pixels never leave the machine.
 
 ## Install
 
-On Debian or Ubuntu with GNOME:
+On Debian, Ubuntu, or Fedora with GNOME:
 
 ```bash
 curl -fsSL https://voxsnip.voxonlabs.com/install.sh | bash
@@ -68,19 +68,19 @@ Installed language packs must match the codes in that file.
 
 ## Requirements
 
-Tested target: Ubuntu with GNOME.
+Tested targets: Ubuntu and Fedora with GNOME.
 
-| Package | Role |
-| --- | --- |
-| GNOME Shell 45+ | Direct area picker on GNOME/Wayland |
-| `python3-gi` | Direct-selection/portal bridge |
-| `tesseract-ocr` | Local OCR |
-| `xclip` | X11 clipboard |
-| `wl-clipboard` | Wayland clipboard |
-| `libnotify-bin` | Desktop notifications |
-| `tesseract-ocr-*` | Optional language data |
+| Debian / Ubuntu | Fedora | Role |
+| --- | --- | --- |
+| GNOME Shell 45+ | GNOME Shell 45+ | Direct area picker on GNOME/Wayland |
+| `python3-gi` | `python3-gobject` | Direct-selection/portal bridge |
+| `tesseract-ocr` | `tesseract` | Local OCR |
+| `xclip` | `xclip` | X11 clipboard |
+| `wl-clipboard` | `wl-clipboard` | Wayland clipboard |
+| `libnotify-bin` | `libnotify` | Desktop notifications |
+| `tesseract-ocr-*` | `tesseract-langpack-*` | Optional language data |
 
-The installer installs these with `apt-get`. Shortcuts are set through `gsettings` and require a GNOME session.
+The installer installs these with `apt-get` on Debian/Ubuntu or `dnf` on Fedora. Shortcuts are set through `gsettings` and require a GNOME session.
 
 ## Configuration
 
@@ -108,7 +108,7 @@ curl -fsSL https://voxsnip.voxonlabs.com/voxsnip-uninstall.sh | bash
 ```
 
 The uninstall script removes the user scripts, config directory, Shell companion,
-and GNOME custom shortcuts. It does not remove apt packages.
+and GNOME custom shortcuts. It does not remove system packages.
 
 ## Repository layout
 
