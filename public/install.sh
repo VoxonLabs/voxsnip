@@ -99,21 +99,103 @@ require_cmd() {
   command -v "$1" >/dev/null 2>&1
 }
 
-install_packages() {
-  local packages=("$@")
-  if ! require_cmd apt-get; then
-    die "This installer requires apt-get (Debian/Ubuntu)."
+detect_distro() {
+  if [[ -f /etc/os-release ]]; then
+    local id id_like
+    id="$(grep -E '^ID=' /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"'\''')"
+    id_like="$(grep -E '^ID_LIKE=' /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"'\''')"
+    case "${id}:${id_like}" in
+      *fedora*|*rhel*|*centos*|*rocky*|*alma*)
+        printf 'fedora\n'
+        return 0
+        ;;
+      *debian*|*ubuntu*|*pop*|*mint*)
+        printf 'debian\n'
+        return 0
+        ;;
+    esac
   fi
+
+  if require_cmd dnf || require_cmd dnf5; then
+    printf 'fedora\n'
+    return 0
+  fi
+  if require_cmd apt-get; then
+    printf 'debian\n'
+    return 0
+  fi
+
+  printf 'unknown\n'
+  return 1
+}
+
+get_pkg_name() {
+  local distro="$1"
+  local key="$2"
+  case "$distro" in
+    fedora)
+      case "$key" in
+        python3-gi)             printf 'python3-gobject\n' ;;
+        tesseract-ocr)          printf 'tesseract\n' ;;
+        xclip)                  printf 'xclip\n' ;;
+        wl-clipboard)           printf 'wl-clipboard\n' ;;
+        libnotify-bin)          printf 'libnotify\n' ;;
+        tesseract-ocr-eng)      printf 'tesseract-langpack-eng\n' ;;
+        tesseract-ocr-spa)      printf 'tesseract-langpack-spa\n' ;;
+        tesseract-ocr-fra)      printf 'tesseract-langpack-fra\n' ;;
+        tesseract-ocr-deu)      printf 'tesseract-langpack-deu\n' ;;
+        tesseract-ocr-jpn)      printf 'tesseract-langpack-jpn\n' ;;
+        tesseract-ocr-jpn-vert) printf 'tesseract-langpack-jpn_vert\n' ;;
+        tesseract-ocr-nep)      printf 'tesseract-langpack-nep\n' ;;
+        *)                      printf '%s\n' "$key" ;;
+      esac
+      ;;
+    *)
+      printf '%s\n' "$key"
+      ;;
+  esac
+}
+
+install_packages() {
+  local distro="$1"
+  shift
+  local packages=("$@")
+
   if ! require_cmd sudo; then
     die "sudo is required to install packages."
   fi
 
-  info "Updating package lists..."
-  sudo apt-get update -y || die "apt-get update failed."
+  case "$distro" in
+    debian)
+      if ! require_cmd apt-get; then
+        die "This installer requires apt-get (Debian/Ubuntu)."
+      fi
+      info "Updating package lists..."
+      sudo apt-get update -y || die "apt-get update failed."
 
-  info "Installing: ${packages[*]}"
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "${packages[@]}" \
-    || die "Package installation failed."
+      info "Installing: ${packages[*]}"
+      sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "${packages[@]}" \
+        || die "Package installation failed."
+      ;;
+    fedora)
+      local pkg_mgr="dnf"
+      if ! require_cmd dnf; then
+        if require_cmd dnf5; then
+          pkg_mgr="dnf5"
+        else
+          die "This installer requires dnf (Fedora)."
+        fi
+      fi
+
+      info "Installing: ${packages[*]}"
+      sudo "$pkg_mgr" install -y "${packages[@]}" \
+        || die "Package installation failed."
+      ;;
+    *)
+      die "Unsupported distribution. Please install the following packages manually:\n${packages[*]}"
+      ;;
+  esac
+
   ok "Dependencies installed."
 }
 
@@ -205,6 +287,10 @@ print(repr(enabled))
 PY
     )"
     gsettings set org.gnome.shell enabled-extensions "$updated" || true
+  fi
+
+  if require_cmd gnome-extensions; then
+    gnome-extensions enable "$EXTENSION_UUID" >/dev/null 2>&1 || true
   fi
 
   ok "Direct-selection companion installed."
@@ -325,13 +411,26 @@ ensure_local_bin_path() {
     *":${BIN_DIR}:"*) return 0 ;;
   esac
 
-  local profile="${HOME}/.profile"
-  if [[ -f "$profile" ]] && grep -q '\.local/bin' "$profile" 2>/dev/null; then
-    warn "${BIN_DIR} is not on PATH in this session. Shortcuts use full paths, so they still work."
-    return 0
+  local profile
+  for profile in "${HOME}/.bash_profile" "${HOME}/.profile"; do
+    if [[ -f "$profile" ]] && grep -q '\.local/bin' "$profile" 2>/dev/null; then
+      warn "${BIN_DIR} is not on PATH in this session. Shortcuts use full paths, so they still work."
+      return 0
+    fi
+  done
+
+  local target_rc="${HOME}/.bashrc"
+  if [[ -f "${HOME}/.bash_profile" ]]; then
+    target_rc="${HOME}/.bash_profile"
   fi
 
-  if [[ -f "${HOME}/.bashrc" ]] && ! grep -Fq '.local/bin' "${HOME}/.bashrc"; then
+  if [[ -f "$target_rc" ]] && ! grep -Fq '.local/bin' "$target_rc"; then
+    {
+      printf '\n# VoxSnip (VoxonLabs)\n'
+      printf 'export PATH="$HOME/.local/bin:$PATH"\n'
+    } >> "$target_rc"
+    warn "Added ${BIN_DIR} to PATH in $(basename "$target_rc") (new terminals only)."
+  elif [[ -f "${HOME}/.bashrc" ]] && ! grep -Fq '.local/bin' "${HOME}/.bashrc"; then
     {
       printf '\n# VoxSnip (VoxonLabs)\n'
       printf 'export PATH="$HOME/.local/bin:$PATH"\n'
@@ -343,41 +442,66 @@ ensure_local_bin_path() {
 main() {
   welcome
 
+  local distro
+  distro="$(detect_distro || true)"
+  if [[ "$distro" != "debian" && "$distro" != "fedora" ]]; then
+    warn "Unrecognized Linux distribution. Defaulting to Debian/Ubuntu package names."
+    distro="debian"
+  fi
+
   info "Select Tesseract OCR language packs to install."
   printf "${DIM}English is recommended and selected by default.${RESET}\n\n"
 
-  local packages=(
+  local base_packages=(
     python3-gi
     tesseract-ocr
     xclip
     wl-clipboard
     libnotify-bin
   )
-  local tess_langs=()
+  local packages=()
+  local pkg
+  for pkg in "${base_packages[@]}"; do
+    packages+=("$(get_pkg_name "$distro" "$pkg")")
+  done
 
-  if ask_yes_no "English / US / UK  (tesseract-ocr-eng)" "y"; then
-    packages+=(tesseract-ocr-eng)
+  local tess_langs=()
+  local eng_pkg spa_pkg jpn_pkg nep_pkg
+  eng_pkg="$(get_pkg_name "$distro" "tesseract-ocr-eng")"
+  spa_pkg="$(get_pkg_name "$distro" "tesseract-ocr-spa")"
+  jpn_pkg="$(get_pkg_name "$distro" "tesseract-ocr-jpn")"
+  nep_pkg="$(get_pkg_name "$distro" "tesseract-ocr-nep")"
+
+  if ask_yes_no "English / US / UK  (${eng_pkg})" "y"; then
+    packages+=("$eng_pkg")
     tess_langs+=(eng)
   fi
 
   if ask_yes_no "European languages  Spanish / French / German" "n"; then
-    packages+=(tesseract-ocr-spa tesseract-ocr-fra tesseract-ocr-deu)
+    packages+=(
+      "$spa_pkg"
+      "$(get_pkg_name "$distro" "tesseract-ocr-fra")"
+      "$(get_pkg_name "$distro" "tesseract-ocr-deu")"
+    )
     tess_langs+=(spa fra deu)
   fi
 
-  if ask_yes_no "Japanese & vertical text  (tesseract-ocr-jpn, tesseract-ocr-jpn-vert)" "n"; then
-    packages+=(tesseract-ocr-jpn tesseract-ocr-jpn-vert)
+  if ask_yes_no "Japanese & vertical text  (${jpn_pkg})" "n"; then
+    packages+=(
+      "$jpn_pkg"
+      "$(get_pkg_name "$distro" "tesseract-ocr-jpn-vert")"
+    )
     tess_langs+=(jpn jpn_vert)
   fi
 
-  if ask_yes_no "Nepali  (tesseract-ocr-nep)" "n"; then
-    packages+=(tesseract-ocr-nep)
+  if ask_yes_no "Nepali  (${nep_pkg})" "n"; then
+    packages+=("$nep_pkg")
     tess_langs+=(nep)
   fi
 
   if [[ ${#tess_langs[@]} -eq 0 ]]; then
-    warn "No languages selected. Defaulting to English (eng)."
-    packages+=(tesseract-ocr-eng)
+    warn "No languages selected. Defaulting to English (${eng_pkg})."
+    packages+=("$eng_pkg")
     tess_langs+=(eng)
   fi
 
@@ -388,7 +512,7 @@ main() {
   info "OCR language string: ${BOLD}-l ${lang_string}${RESET}"
   printf "\n"
 
-  install_packages "${packages[@]}"
+  install_packages "$distro" "${packages[@]}"
   install_scripts
   enable_shell_companion
   write_langs_conf "$lang_string"

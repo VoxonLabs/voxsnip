@@ -6,6 +6,8 @@ All notable changes to VoxSnip are recorded here. The format follows [Keep a Cha
 
 ### Added
 
+- Fedora Linux support with automatic distribution detection and `dnf` package management.
+- Support for `~/.bash_profile` PATH configuration on Fedora and non-Debian distributions.
 - Direct GNOME area selection: drag and release to finish, with no mode or capture-button click.
 - Screenshot portal v3 Area-target support, with the legacy chooser retained as a fallback.
 
